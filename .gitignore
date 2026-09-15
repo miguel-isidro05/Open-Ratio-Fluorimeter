@@ -1,0 +1,19 @@
+.DS_Store
+._*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.kicad_prl
+~*.lck
+fp-info-cache
+*.tmp
+
+# Datos generados al ejecutar las GUI.
+records/*.csv
+sessions/*/telemetry.csv
+
+# Los originales de cámara permanecen fuera del repositorio.
+*.MOV
+*.mov
