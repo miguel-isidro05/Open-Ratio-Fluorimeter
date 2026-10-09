@@ -6,7 +6,7 @@ void drain() { for (int i = 0; i < 20; ++i) tx.pump(); }
 
 int main() {
   setup();
-  assert(testPwmPin == 11 && testPwmValue == 64);
+  assert(testPwmPin == 11 && testPwmValue == 256);
   assert(ledPwmPercent == 25);
   assert(integrationIndex == 3);
   assert(testLastGain == AS7341_GAIN_128X);
@@ -69,16 +69,16 @@ int main() {
   handleCommand("{\"type\":\"command\",\"command\":\"set_pwm\",\"value\":0}");
   assert(ledPwmPercent == 0 && testPwmPin == 11 && testPwmValue == 0);
   handleCommand("{\"type\":\"command\",\"command\":\"set_pwm\",\"value\":100}");
-  assert(ledPwmPercent == 100 && testPwmValue == 255);
+  assert(ledPwmPercent == 100 && testPwmValue == 1023);
   handleCommand("{\"type\":\"command\",\"command\":\"set_pwm\",\"value\":25}");
-  assert(ledPwmPercent == 25 && testPwmValue == 64);
+  assert(ledPwmPercent == 25 && testPwmValue == 256);
   handleCommand("{\"type\":\"command\",\"command\":\"begin_capture\",\"capture_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"settle_ms\":1000}");
   assert(strlen(captureId) == 32);
   handleCommand("{\"type\":\"command\",\"command\":\"set_pwm\",\"value\":50}");
-  assert(captureId[0] == '\0' && ledPwmPercent == 50 && testPwmValue == 128);
+  assert(captureId[0] == '\0' && ledPwmPercent == 50 && testPwmValue == 512);
   handleCommand("{\"type\":\"command\",\"command\":\"set_pwm\",\"value\":25}");
   handleCommand("{\"type\":\"command\",\"command\":\"set_pwm\",\"value\":101}");
-  assert(ledPwmPercent == 25 && testPwmValue == 64);
+  assert(ledPwmPercent == 25 && testPwmValue == 256);
   drain();
   handleCommand("{\"type\":\"command\",\"command\":\"set_gain\",\"value\":\"1x\"}junk");
   assert(gainIndex == 7);
