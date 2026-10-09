@@ -5,6 +5,7 @@
 #include <Adafruit_AS7341.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
+#include <HighSpeedPWMDAC.h>
 #if defined(__AVR__)
 #include <avr/wdt.h>
 #endif
@@ -47,6 +48,7 @@ constexpr uint8_t kDefaultLedPwmPercent{25};
 
 Adafruit_PCD8544 display{kDisplayDcPin, kDisplayCePin, kDisplayResetPin};
 Adafruit_AS7341 sensor;
+HighSpeedPWMDAC ledPwmDac{kLedPwmPin};
 
 struct MeasurementFrame {
   uint16_t values[kChannelCount]{};
@@ -111,8 +113,12 @@ uint8_t pwmRawFromPercent(const uint8_t percent) {
   return static_cast<uint8_t>((static_cast<uint16_t>(percent) * 255U + 50U) / 100U);
 }
 
+uint16_t pwmDacRawFromPercent(const uint8_t percent) {
+  return static_cast<uint16_t>((static_cast<uint32_t>(percent) * HighSpeedPWMDAC::kMaxValue + 50U) / 100U);
+}
+
 void applyLedPwm() {
-  analogWrite(kLedPwmPin, pwmRawFromPercent(ledPwmPercent));
+  ledPwmDac.setRaw(pwmDacRawFromPercent(ledPwmPercent));
 }
 
 void sendJsonString(const char* value) {
@@ -467,14 +473,14 @@ void showSensorError() {
 }  // namespace
 
 void configurarPWM() {
-  pinMode(kLedPwmPin, OUTPUT);
+  ledPwmDac.begin();
   applyLedPwm();
 }
 
 void setup() {
   Serial.begin(115200);
 
-  // PWM inicial de 25 % en D11: equivale a analogWrite(64).
+  // PWM inicial de 25 % en D11 usando la resolución de 10 bits del driver.
   configurarPWM();
   Wire.begin();
   Wire.setWireTimeout(25000, true);
