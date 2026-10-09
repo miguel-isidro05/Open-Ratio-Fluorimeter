@@ -4,10 +4,12 @@ Repositorio de trabajo para la adaptación del fluorímetro ratiométrico de IO 
 
 ## Estado actual
 
-Hay dos montajes documentados:
+Hay dos líneas de trabajo documentadas:
 
 1. El IO Rodeo con PyBadge, pantalla integrada y adaptación para el sensor AS7341.
-2. La versión de demostración con Arduino Mega 2560, AS7341, pantalla Nokia 5110, GUI de escritorio y cuatro placas LED intercambiables.
+2. La versión de demostración con Arduino Mega 2560, AS7341, interfaz de pantalla y cuatro placas LED intercambiables.
+
+La GUI vigente es **Spectral Lab v2.0**. Conserva la adquisición, el protocolo serial, los experimentos y el análisis de la versión anterior, y adopta la distribución de producto validada durante el desarrollo. La entrega anterior permanece en `v1.0` como referencia histórica.
 
 La PCB Excite V5 es la iteración más reciente del módulo de excitación y está orientada al uso de LED seleccionados por banda. La PCB Energy entrega las líneas de alimentación usadas por el montaje, incluida la alimentación de 5 V para el Arduino Mega y la línea de 12 V para la iluminación. La PCB Detector se conserva como avance de diseño, pero no forma parte del montaje actual porque la detección se realizará con un módulo AST.
 
@@ -18,7 +20,7 @@ La PCB Excite V5 es la iteración más reciente del módulo de excitación y est
 | [`Firmware/`](Firmware/) | Firmware del Arduino Mega y snapshots del IO Rodeo con PyBadge |
 | [`Software/`](Software/) | GUI del Mega y GUI anterior para el IO Rodeo |
 | [`Hardware/Electronics/`](Hardware/Electronics/) | PCB Excite, Energy y Detector, con sus iteraciones de fabricación |
-| [`Hardware/3D_Models/`](Hardware/3D_Models/) | Carcasa final en STL |
+| [`Hardware/3D_Models/`](Hardware/3D_Models/) | Carcasa v2: fuentes STEP y mallas STL de impresión |
 | [`Experiments/`](Experiments/) | Videos, clips por LED, pósteres y datos registrados |
 | [`Papers/`](Papers/) | Artículos de referencia reunidos para el proyecto |
 | [`PROGRESS.md`](PROGRESS.md) | Cronología y relación entre versiones |
@@ -27,7 +29,8 @@ La PCB Excite V5 es la iteración más reciente del módulo de excitación y est
 
 ## Por dónde empezar
 
-- Para reproducir la versión con Arduino Mega, consulta [`Firmware/Arduino_Mega_AS7341/`](Firmware/Arduino_Mega_AS7341/) y [`Software/Arduino_Mega_AS7341_GUI/`](Software/Arduino_Mega_AS7341_GUI/).
+- Para reproducir la versión con Arduino Mega, consulta [`Firmware/Arduino_Mega_AS7341/`](Firmware/Arduino_Mega_AS7341/) y la GUI vigente en [`Software/Arduino_Mega_AS7341_GUI/v2.0/`](Software/Arduino_Mega_AS7341_GUI/v2.0/).
+- Para fabricar o editar la carcasa actual, usa [`Hardware/3D_Models/Carcasa_v2/`](Hardware/3D_Models/Carcasa_v2/). Los STEP son la fuente editable y los STL son las mallas entregadas para impresión.
 - Para revisar la progresión de la PCB de excitación, abre [`Hardware/Electronics/Excitation/README.md`](Hardware/Electronics/Excitation/README.md).
 - Para ver la demostración por cada LED, abre [`Experiments/Arduino_Mega_4_LED/README.md`](Experiments/Arduino_Mega_4_LED/README.md).
 - Para revisar el funcionamiento del IO Rodeo, abre [`Experiments/IO_Rodeo_AS7341/README.md`](Experiments/IO_Rodeo_AS7341/README.md).

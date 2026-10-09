@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
         identity.setContentsMargins(0, 0, 0, 0)
         identity.setSpacing(1)
         identity.addWidget(title)
-        subtitle = QLabel('Caracterización óptica con Arduino Mega, AS7341 y Nokia 5110')
+        subtitle = QLabel('Caracterización óptica con Arduino Mega, AS7341 y pantalla OLED')
         subtitle.setObjectName('subtitle')
         identity.addWidget(subtitle)
         header.addLayout(identity)

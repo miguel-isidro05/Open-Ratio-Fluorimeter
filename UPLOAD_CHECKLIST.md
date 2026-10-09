@@ -7,6 +7,7 @@
 3. Confirma que los cuatro clips representan el LED correcto. Los LED 3 y 4 no tienen longitud de onda nominal asignada porque el video no identifica el componente.
 4. Revisa los datos de `Experiments/Arduino_Mega_4_LED/data/` y retira cualquier sesión que no deba publicarse.
 5. Confirma la licencia de `Firmware/IO_Rodeo_PyBadge/reference_upstream/`.
+6. Confirma que `Software/Arduino_Mega_AS7341_GUI/v2.0/` siga marcado como vigente y que `Hardware/3D_Models/Carcasa_v2/` contenga los cuatro archivos mecánicos actuales.
 
 ## Archivos de macOS
 
@@ -25,11 +26,12 @@ No debería aparecer ningún archivo nuevo por encima de 95 MB. Los videos deriv
 ## Preparar el commit
 
 ```bash
-git add .
+git add README.md PROGRESS.md VERIFICATION.md UPLOAD_CHECKLIST.md \
+  Software/ Hardware/ Experiments/
 git status --short
-git commit -m "Organiza avances del fluorimetro y documenta versiones"
+git diff --cached --check
+git commit -m "Publica GUI v2 y carcasa v2"
 git push
 ```
 
 Revisa la lista de `git status` antes de confirmar. Este documento describe los comandos, pero no sustituye la revisión del contenido que se hará público.
-

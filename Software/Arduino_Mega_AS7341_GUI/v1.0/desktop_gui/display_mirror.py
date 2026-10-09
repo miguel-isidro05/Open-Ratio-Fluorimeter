@@ -1,4 +1,4 @@
-"""Lectura IO Rodeo completa y espejo de la pantalla Nokia."""
+"""Lectura IO Rodeo completa y espejo de la pantalla OLED."""
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -44,7 +44,7 @@ class DisplayMirror(QWidget):
         self.status = QLabel("Sin datos. Conecta el Mega con firmware 2.3.0.")
         self.status.setObjectName("mirrorStatus")
         self.status.setWordWrap(True)
-        self.status.setAccessibleName("Estado de la lectura IO Rodeo y del espejo Nokia")
+        self.status.setAccessibleName("Estado de la lectura IO Rodeo y del espejo OLED")
         root.addWidget(self.status)
 
         content = QHBoxLayout()
@@ -86,7 +86,7 @@ class DisplayMirror(QWidget):
         return group
 
     def _build_nokia_mirror(self):
-        group = QGroupBox("Nokia 5110: pantalla física")
+        group = QGroupBox("OLED: pantalla física")
         layout = QVBoxLayout(group)
         layout.setSpacing(5)
 
@@ -94,7 +94,7 @@ class DisplayMirror(QWidget):
         self.nokia.setTextFormat(Qt.TextFormat.PlainText)
         self.nokia.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.nokia.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.nokia.setAccessibleName("Texto enviado por el firmware a la Nokia 5110")
+        self.nokia.setAccessibleName("Texto enviado por el firmware a la pantalla OLED")
         self.nokia.setStyleSheet(
             "background:#dce6bd; color:#17200e; padding:10px; "
             "font-family:Menlo; font-size:16px; border:1px solid #a8b58c; "
@@ -106,7 +106,7 @@ class DisplayMirror(QWidget):
         self.nokia_page.setObjectName("secondaryText")
         layout.addWidget(self.nokia_page)
 
-        self.auto = QCheckBox("Alternar la pantalla Nokia automáticamente cada 3 s")
+        self.auto = QCheckBox("Alternar la pantalla OLED automáticamente cada 3 s")
         self.auto.setChecked(True)
         self.auto.setToolTip("La tabla completa de la izquierda siempre conserva visibles los diez canales.")
         self.auto.clicked.connect(

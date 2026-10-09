@@ -128,13 +128,14 @@ class SpectralPlot(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.fillRect(self.rect(), QColor("#ffffff"))
-        if self._display_values is None:
-            painter.setPen(QColor("#64748b"))
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "Esperando lecturas del AS7341")
-            return
-
         left, top, right, bottom = 72, 32, 96, 62
         plot_rect = QRectF(left, top, max(1, self.width() - left - right), max(1, self.height() - top - bottom))
+        if self._display_values is None:
+            self._draw_grid(painter, plot_rect)
+            self._draw_axes_and_labels(painter, plot_rect)
+            self._draw_wavelength_bar(painter, plot_rect)
+            return
+
         self._draw_grid(painter, plot_rect)
         points = self._measurement_points(plot_rect)
         gradient = _spectral_gradient(plot_rect)

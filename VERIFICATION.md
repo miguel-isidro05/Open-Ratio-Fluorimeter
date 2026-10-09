@@ -1,6 +1,6 @@
 # Verificación de la copia organizada
 
-Fecha de verificación: 14 de septiembre de 2026.
+Fecha de verificación inicial: 14 de septiembre de 2026. Actualización de GUI y mecánica: 9 de octubre de 2026.
 
 ## Firmware del Arduino Mega
 
@@ -10,7 +10,9 @@ Fecha de verificación: 14 de septiembre de 2026.
 
 ## GUI
 
-- GUI del Arduino Mega: 63 de 63 pruebas aprobadas en modo Qt offscreen.
+- Spectral Lab v2.0: 65 de 65 pruebas aprobadas en modo Qt offscreen.
+- El lanzador vigente es `Software/Arduino_Mega_AS7341_GUI/v2.0/main.py`.
+- Auditoría de dependencias declaradas con `pip-audit`: sin vulnerabilidades conocidas.
 - GUI histórica del IO Rodeo: 13 de 13 pruebas aprobadas.
 - La prueba de integración de la GUI histórica se ajustó para localizar el firmware en `Firmware/IO_Rodeo_PyBadge/v2.0_tsl2591_gui/`. Una revisión independiente no encontró regresiones en ese cambio.
 
@@ -20,6 +22,7 @@ Fecha de verificación: 14 de septiembre de 2026.
 - Los archivos fuente copiados de Excite, Energy, Detector, firmware Mega y GUI Mega coinciden con sus originales, salvo exclusiones documentadas de cachés y archivos temporales.
 - No hay archivos nuevos mayores de 95 MB.
 - No se copiaron entornos virtuales, cachés Python, `fp-info-cache`, archivos `.kicad_prl` ni videos MOV originales.
+- La carcasa v2 conserva dos STEP y dos STL con hashes SHA-256 documentados en `Hardware/3D_Models/Carcasa_v2/README.md`.
 
 ## Medios
 

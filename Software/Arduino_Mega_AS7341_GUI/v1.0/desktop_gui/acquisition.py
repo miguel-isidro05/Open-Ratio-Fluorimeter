@@ -128,7 +128,7 @@ class Acquisition(QWidget):
         self.save = QPushButton('Guardar adquisición CSV…')
         self.freeze = QPushButton('Congelar gráfica')
         self.freeze.setCheckable(True)
-        self.nokia = QPushButton('Mostrar canal en Nokia')
+        self.nokia = QPushButton('Mostrar canal en OLED')
         self.nokia.setEnabled(False)
         for button in (self.start, self.pause, self.finish, self.save, self.freeze, self.nokia):
             buttons.addWidget(button)

@@ -1,8 +1,10 @@
 .DS_Store
 ._*
+.agent-memory.md
 __pycache__/
 *.py[cod]
 .pytest_cache/
+graphify-out/
 .venv/
 venv/
 *.kicad_prl
@@ -11,8 +13,12 @@ fp-info-cache
 *.tmp
 
 # Datos generados al ejecutar las GUI.
-records/*.csv
-sessions/*/telemetry.csv
+records/
+sessions/
+
+# Borrador local previo a la publicación autónoma de v2.0.
+Software/Arduino_Mega_AS7341_GUI/v1.0/design_prototype/
+Software/Arduino_Mega_AS7341_GUI/v1.0/tests/test_main_v2_layout.py
 
 # Los originales de cámara permanecen fuera del repositorio.
 *.MOV

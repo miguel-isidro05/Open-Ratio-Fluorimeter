@@ -26,16 +26,20 @@ Esta cronología reúne fechas visibles en los respaldos, documentos y archivos 
 - 12 de septiembre: módulos de experimentos, blancos, cocientes, calibración, resultados y controles de calidad. Quedó pendiente la validación óptica con el montaje real.
 - 14 de septiembre: escala Y automática opcional en la GUI y registro de la demostración con cuatro placas LED.
 
+## Octubre de 2026
+
+- 9 de octubre: consolidación de Spectral Lab v2.0 como GUI vigente, con distribución de producto en cuatro áreas de trabajo y denominación OLED en la interfaz.
+- 9 de octubre: incorporación de la carcasa v2. La base y la tapa quedan archivadas en STEP; las mallas STL entregadas se conservan con sus nombres originales para no perder la trazabilidad del flujo de fusión.
+
 ## Relación entre ramas
 
 | Rama | Controlador | Sensor principal | Pantalla | Software de escritorio |
 | --- | --- | --- | --- | --- |
 | IO Rodeo adaptado | PyBadge | AS7341 a 90 grados y TSL2591 a 180 grados | Integrada en el equipo | GUI TSL anterior, cuando se usa el firmware con telemetría |
-| Demostración Mega | Arduino Mega 2560 | AS7341 | Nokia 5110 | GUI multicanal en PyQt |
+| Demostración Mega | Arduino Mega 2560 | AS7341 | OLED en la GUI v2; el snapshot de firmware v1 conserva PCD8544 | Spectral Lab v2.0 en PyQt6 |
 
 ## Estado de las PCB
 
 - Excite V5 es la iteración de fabricación más reciente y se conserva como la versión actual para LED específicos por banda.
 - Energy conserva la fuente KiCad, dos rutas FlatCAM previas, una ruta final y archivos para corte láser.
 - Detector V1 se archiva como diseño no utilizado en el montaje AST actual.
-
