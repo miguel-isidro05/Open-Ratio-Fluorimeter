@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Spectral Lab: adquisición y análisis del AS7341 mediante Arduino Mega y Web Serial.">
+  <meta name="theme-color" content="#102536">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%231457c8%22/><path d=%22M13 36h8l5-18 10 32 7-24 5 14h6%22 fill=%22none%22 stroke=%22white%22 stroke-width=%225%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
+  <title>Spectral Lab · AS7341 Web Serial</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --chrome: #102536;
+      --chrome-2: #183246;
+      --canvas: #f3f5f7;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --surface-3: #eef3f7;
+      --ink: #142b40;
+      --muted: #52677a;
+      --faint: #718397;
+      --border: #d5dee7;
+      --divider: #e5eaf0;
+      --blue: #1457c8;
+      --blue-hover: #0f49aa;
+      --blue-soft: #e8f0fc;
+      --red: #d92d20;
+      --amber: #a65f00;
+      --green: #147d59;
+      --focus: #6ea2ff;
+      --card-radius: 11px;
+      --control-radius: 7px;
+      --card-shadow: 0 5px 18px rgba(16, 37, 54, .055);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #dfe5eb;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 13px;
+      text-rendering: geometricPrecision;
+    }
+
+    button, input, select { font: inherit; }
+
+    button, select, input {
+      min-height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--control-radius);
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    button { cursor: pointer; }
+
+    button:focus-visible, select:focus-visible, input:focus-visible, [role="tab"]:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    button:disabled, select:disabled, input:disabled {
+      cursor: not-allowed;
+      color: #8b99a7;
+      background: #f1f4f7;
+      border-color: #dbe2e9;
+      opacity: 1;
+    }
+
+    .icon {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .app {
+      width: 100vw;
+      height: 100vh;
+      min-width: 1180px;
+      min-height: 720px;
+      display: grid;
+      grid-template-rows: 64px 68px minmax(0, 1fr) 28px;
+      overflow: hidden;
+      background: var(--canvas);
+      border: 1px solid #bec9d3;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(350px, 1fr) auto minmax(250px, 1fr);
+      align-items: stretch;
+      background: var(--chrome);
+      color: #fff;
+      border-bottom: 1px solid #294256;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      padding-left: 14px;
+      gap: 16px;
+    }
+
+    .traffic { display: flex; gap: 7px; flex: 0 0 auto; }
+    .traffic span { width: 12px; height: 12px; border-radius: 50%; display: block; }
+    .traffic .close { background: #ff5f57; }
+    .traffic .min { background: #febc2e; }
+    .traffic .max { background: #28c840; }
+
+    .brand-logo {
+      width: 202px;
+      height: 44px;
+      object-fit: contain;
+      object-position: left center;
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
+    }
+
+    .brand-name { min-width: 0; }
+    .brand-name strong { display: block; font-size: 17px; font-weight: 650; letter-spacing: -0.015em; }
+    .brand-name span { display: block; margin-top: 2px; color: #c8d5df; font-size: 11px; }
+
+    .main-nav {
+      display: flex;
+      align-items: stretch;
+      gap: 2px;
+      height: 64px;
+    }
+
+    .nav-tab {
+      position: relative;
+      min-width: 112px;
+      padding: 0 17px;
+      border: 0;
+      border-radius: 0;
+      color: #c9d5df;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 520;
+    }
+
+    .nav-tab:hover { background: rgba(255,255,255,.055); color: #fff; }
+    .nav-tab[aria-selected="true"] { color: #fff; font-weight: 650; }
+    .nav-tab[aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 0;
+      height: 3px;
+      background: #72a5ff;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-right: 18px;
+    }
+
+    .icon-button {
+      width: 32px;
+      height: 32px;
+      min-height: 32px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      color: var(--muted);
+      background: var(--surface);
+    }
+
+    .top-actions .icon-button { color: #d9e3eb; border-color: transparent; background: transparent; }
+    .top-actions .icon-button:hover { background: rgba(255,255,255,.08); color: #fff; }
+
+    .separator-v { width: 1px; height: 26px; background: rgba(255,255,255,.22); margin: 0 3px; }
+    .separator-v.light { background: var(--border); }
+
+    .status-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      color: #d9e3eb;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border: 1.5px solid currentColor;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .connection-bar {
+      display: grid;
+      grid-template-columns: minmax(480px, auto) minmax(360px, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 18px 8px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,.94);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--card-shadow);
+      align-self: stretch;
+      z-index: 2;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .connection-group { min-width: 0; display: flex; align-items: center; gap: 9px; }
+    .connection-group + .connection-group { border-left: 1px solid var(--divider); padding-left: 12px; }
+    .connection-record { justify-content: flex-end; }
+    .connection-bar::before { content: ""; position: absolute; inset: -11px -19px -9px; background: var(--canvas); z-index: -1; border-bottom: 1px solid var(--border); }
+
+    .field-label { color: var(--ink); font-weight: 600; }
+
+    .compact-select, .compact-input {
+      height: 36px;
+      padding: 0 30px 0 10px;
+      min-width: 180px;
+    }
+
+    .sample-select { width: 196px; }
+
+    .button {
+      height: 36px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 580;
+      background: var(--surface);
+      color: var(--blue);
+    }
+
+    .button:hover:not(:disabled) { border-color: #aebdca; background: #fafcff; }
+    .button.primary { color: #fff; background: var(--blue); border-color: var(--blue); }
+    .button.primary:hover:not(:disabled) { background: var(--blue-hover); border-color: var(--blue-hover); }
+    .button.danger-quiet { color: var(--ink); }
+    .record-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--red); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+    .button.primary:disabled { color: #8b99a7; background: #eef1f5; border-color: #d7dee6; }
+    .button:disabled .record-dot { background: #aeb8c2; box-shadow: none; }
+
+    .connection-spacer { flex: 1; min-width: 12px; }
+    .connection-state { color: var(--muted); }
+
+    .workspace { min-height: 0; overflow: hidden; }
+    .view { display: none; width: 100%; height: 100%; min-height: 0; }
+    .view.active { display: grid; }
+
+    .panel-title { font-size: 14px; font-weight: 670; letter-spacing: -0.01em; }
+    .panel-subtitle { margin-top: 3px; color: var(--muted); font-size: 11.5px; }
+    .section-title { font-size: 12px; font-weight: 700; color: var(--ink); }
+    .muted { color: var(--muted); }
+    .faint { color: var(--faint); }
+    .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+    /* Acquisition */
+    .acquisition-view { grid-template-columns: 242px minmax(520px, 1fr) 302px; gap: 14px; padding: 14px 18px 16px; background: var(--canvas); }
+    .parameter-panel, .analysis-panel, .inspector-panel { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); box-shadow: var(--card-shadow); overflow: hidden; }
+    .parameter-panel, .inspector-panel { padding: 18px 18px 14px; }
+
+    .control-group { margin-top: 13px; padding: 13px 12px 14px; border: 1px solid var(--divider); border-radius: 8px; background: var(--surface-2); }
+    .control-group:last-child { border-bottom: 1px solid var(--divider); }
+    .control-group .section-title { margin-bottom: 10px; }
+    .form-row { display: grid; grid-template-columns: 80px minmax(0, 1fr); align-items: center; gap: 8px; margin-bottom: 8px; }
+    .form-row:last-child { margin-bottom: 0; }
+    .form-row label { color: var(--muted); font-size: 12px; }
+    .form-row select, .form-row input { width: 100%; max-width: 100%; min-width: 0; height: 30px; padding: 0 9px; }
+    .form-row .button { width: 100%; grid-column: 1 / -1; margin-top: 3px; }
+
+    .switch-row, .check-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 30px; color: var(--muted); font-size: 12px; }
+    .switch {
+      width: 34px; height: 19px; padding: 2px; border-radius: 10px;
+      background: #c9d2dc; display: inline-flex; align-items: center;
+    }
+    .switch::after { content: ""; width: 15px; height: 15px; border-radius: 50%; background: #fff; border: 1px solid #b8c2cc; }
+    .check { width: 16px; height: 16px; border: 1px solid var(--blue); border-radius: 3px; color: #fff; background: var(--blue); display: inline-grid; place-items: center; font-size: 11px; }
+
+    .analysis-panel { min-width: 0; display: grid; grid-template-rows: 62px minmax(0, 1fr) 82px; }
+    .analysis-heading { display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid var(--divider); }
+    .tool-row { display: flex; gap: 7px; }
+    .tool-row .icon-button { border-color: var(--border); }
+
+    .plot-shell { position: relative; min-height: 0; padding: 18px 22px 6px 48px; }
+    .plot-svg { width: 100%; height: 100%; display: block; }
+    .axis-label-y { position: absolute; left: 10px; top: 50%; transform: rotate(-90deg) translateY(-50%); transform-origin: left top; color: var(--muted); font-size: 11px; }
+    .axis-label-x { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); color: var(--muted); font-size: 11px; }
+    .empty-state { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); width: 340px; text-align: center; }
+    .empty-state .sensor { width: 42px; height: 42px; color: #7f90a2; margin-bottom: 8px; }
+    .empty-state strong { display: block; font-size: 16px; letter-spacing: -0.015em; }
+    .empty-state p { margin: 5px 0 12px; color: var(--muted); font-size: 12px; }
+
+    .spectrum-key { display: grid; grid-template-columns: repeat(10, minmax(42px, 1fr)); gap: 4px; padding: 10px 20px 12px 48px; border-top: 1px solid var(--divider); background: var(--surface); }
+    .spectrum-item { min-width: 0; text-align: center; font-size: 10px; color: var(--muted); }
+    .spectrum-item strong { display: block; margin-top: 5px; color: var(--ink); font-size: 10.5px; font-weight: 650; }
+    .mark { width: 11px; height: 11px; display: inline-block; background: var(--mark); border: 1px solid rgba(0,0,0,.12); }
+    .mark.circle { border-radius: 50%; }
+    .mark.diamond { transform: rotate(45deg); }
+    .mark.triangle { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 11px solid var(--mark); border-top: 0; background: none; }
+    .mark.ring { border-radius: 50%; background: transparent; border: 1.5px solid var(--mark); }
+
+    .table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11.5px; background: var(--surface); }
+    .table th { height: 31px; text-align: left; padding: 0 10px; color: var(--ink); background: #edf2f6; border: 1px solid var(--border); font-weight: 680; }
+    .table td { height: 31px; padding: 0 10px; border: 1px solid var(--divider); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .table tbody tr:nth-child(even) { background: #f9fbfc; }
+    .table .numeric { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+    .inspector-panel .panel-subtitle { margin-bottom: 13px; }
+    .context-block { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--border); }
+    .context-grid { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; margin: 10px 0 13px; font-size: 11.5px; }
+    .context-grid span:nth-child(odd) { color: var(--muted); }
+    .context-grid span:nth-child(even) { font-family: var(--mono); }
+    .full-width { width: 100%; }
+
+    /* Instrument */
+    .instrument-view { grid-template-rows: 58px minmax(0, 1fr) 126px; gap: 12px; padding: 0 18px 16px; background: var(--canvas); }
+    .notice-bar { margin: 10px 0 0; padding: 0 14px; display: flex; align-items: center; gap: 9px; border: 1px solid #cdd9e4; border-radius: 9px; background: #f8fbfe; color: var(--muted); box-shadow: 0 2px 8px rgba(16,37,54,.035); }
+    .notice-bar strong { color: var(--ink); font-weight: 650; }
+    .instrument-main { min-height: 0; display: grid; grid-template-columns: minmax(470px, 1.4fr) minmax(300px, .82fr) 310px; gap: 14px; margin: 0; border: 0; background: transparent; }
+    .instrument-pane { min-width: 0; padding: 18px; border: 1px solid var(--border); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); overflow: hidden; }
+    .instrument-pane .table { margin-top: 13px; }
+
+    .lcd-wrap { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+    .lcd {
+      align-self: stretch; margin-top: 14px; padding: 24px;
+      background: #dce6bd; border: 1px solid #a8b58c; border-radius: 5px;
+      color: #17200e; font: 17px/1.35 var(--mono);
+      white-space: pre-line;
+    }
+    .lcd-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; color: var(--muted); font-size: 11.5px; }
+    .toggle-line { display: flex; align-items: center; gap: 8px; }
+
+    .device-list { margin: 12px 0 0; padding: 0; list-style: none; }
+    .device-list li { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; min-height: 40px; border-bottom: 1px solid var(--divider); }
+    .device-list li:last-child { border-bottom: 0; }
+    .device-list span { color: var(--muted); }
+    .device-list strong { font-family: var(--mono); font-size: 11.5px; font-weight: 560; }
+    .state-pill { min-width: 0; display: inline-flex; align-items: center; gap: 6px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .instrument-summary { margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); overflow: hidden; }
+    .summary-cell { padding: 12px 14px; border-right: 1px solid var(--divider); }
+    .summary-cell:nth-child(4n) { border-right: 0; }
+    .summary-cell:nth-child(-n+4) { border-bottom: 1px solid var(--divider); }
+    .summary-cell span { display: block; color: var(--muted); font-size: 10.5px; }
+    .summary-cell strong { display: block; margin-top: 4px; font: 600 12px var(--mono); }
+
+    /* Experiments */
+    .experiments-view { grid-template-rows: 144px minmax(0, 1fr); background: var(--canvas); }
+    .experiment-context { display: grid; grid-template-columns: minmax(210px, .8fr) minmax(340px, 1.5fr) 160px 160px; gap: 10px 14px; margin: 12px 18px 0; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); box-shadow: var(--card-shadow); }
+    .labeled-field label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10.5px; font-weight: 600; }
+    .labeled-field input, .labeled-field select { width: 100%; height: 31px; padding: 0 9px; }
+    .span-2 { grid-column: span 2; }
+
+    .experiment-body { min-height: 0; display: grid; grid-template-columns: 212px minmax(560px, 1fr) 290px; gap: 14px; margin: 14px 18px 16px; border: 0; background: transparent; }
+    .subnav { padding: 12px 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); box-shadow: var(--card-shadow); overflow: hidden; }
+    .subnav-label { padding: 0 14px 9px; color: var(--faint); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .subtab {
+      width: calc(100% - 12px); min-height: 42px; margin: 0 6px 4px; padding: 0 12px;
+      display: flex; align-items: center; gap: 10px;
+      border: 0; border-left: 3px solid transparent; border-radius: 7px;
+      background: transparent; color: var(--muted); text-align: left;
+    }
+    .subtab:hover { background: #f0f4f8; color: var(--ink); }
+    .subtab[aria-selected="true"] { color: var(--blue); background: var(--blue-soft); border-left-color: var(--blue); font-weight: 650; }
+
+    .experiment-stage { min-width: 0; min-height: 0; padding: 18px 20px; overflow: auto; border: 1px solid var(--border); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); }
+    .experiment-page { display: none; }
+    .experiment-page.active { display: block; }
+    .stage-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--divider); }
+    .stage-header h2 { margin: 0; font-size: 17px; letter-spacing: -0.02em; }
+    .stage-header p { margin: 5px 0 0; max-width: 710px; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+    .mode-badge { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--surface-2); font-size: 10.5px; }
+
+    .workflow-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+    .workflow-step { position: relative; padding: 8px 10px 8px 34px; border: 1px solid var(--divider); border-radius: 8px; background: var(--surface-2); color: var(--muted); font-size: 10.5px; font-weight: 600; }
+    .workflow-step::before { content: attr(data-step); position: absolute; left: 9px; top: 6px; width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%; background: #dfe7ef; color: var(--ink); font: 650 10px var(--mono); }
+    .workflow-step.current { color: var(--blue); border-color: #b8cef1; background: var(--blue-soft); }
+    .workflow-step.current::before { color: #fff; background: var(--blue); }
+    .capture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .capture-block { border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); overflow: hidden; }
+    .capture-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--divider); }
+    .capture-head strong { font-size: 12px; }
+    .capture-body { padding: 12px; }
+    .inline-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .inline-form select { width: 100%; padding: 0 9px; }
+    .capture-status { margin: 10px 0 0; color: var(--muted); font: 11px var(--mono); }
+    .blank-settings { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--divider); }
+    .blank-row { display: grid; grid-template-columns: auto 1fr auto 1fr; align-items: center; gap: 8px; margin: 10px 0 14px; }
+    .blank-row label { color: var(--muted); font-size: 11px; }
+    .blank-row select { min-width: 0; width: 100%; padding: 0 9px; }
+
+    .session-panel { padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); box-shadow: var(--card-shadow); overflow: auto; }
+    .session-panel .panel-subtitle { margin-bottom: 13px; }
+    .session-status { padding: 11px; border: 1px solid #ccd8e4; border-radius: 8px; background: var(--surface-2); color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+    .result-strip { margin-top: 12px; padding: 10px; border-left: 3px solid var(--blue); background: var(--blue-soft); font-size: 11.5px; }
+    .action-stack { display: grid; gap: 8px; margin-top: 14px; }
+    .mini-history { margin-top: 16px; }
+    .mini-history .table { margin-top: 8px; }
+
+    .calibration-layout { display: grid; grid-template-columns: 260px minmax(320px, 1fr); gap: 16px; margin-top: 16px; }
+    .form-stack { display: grid; gap: 10px; }
+    .form-stack .labeled-field label { font-size: 10.5px; }
+    .calibration-plot { min-height: 280px; border: 1px solid var(--border); background: var(--surface); padding: 12px; }
+    .calibration-plot svg { width: 100%; height: 100%; }
+
+    /* Results */
+    .results-view { grid-template-rows: 78px minmax(0, 1fr); background: var(--canvas); }
+    .results-toolbar { display: flex; align-items: center; gap: 10px; margin: 12px 18px 0; padding: 0 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); box-shadow: var(--card-shadow); }
+    .results-title { margin-right: 12px; }
+    .results-title strong { display: block; font-size: 15px; }
+    .results-title span { display: block; color: var(--muted); font-size: 10.5px; margin-top: 2px; }
+    .results-toolbar select { flex: 1; max-width: 430px; padding: 0 9px; }
+    .criteria { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; color: var(--muted); font-size: 11px; }
+    .criteria input { width: 90px; padding: 0 8px; }
+
+    .results-body { min-height: 0; display: grid; grid-template-columns: 280px minmax(560px, 1fr) 310px; gap: 14px; margin: 14px 18px 16px; border: 0; background: transparent; }
+    .results-summary, .results-detail, .interpretation-panel { border: 1px solid var(--border); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); overflow: hidden; }
+    .results-summary { padding: 16px; }
+    .empty-evidence { margin-top: 13px; padding: 16px 14px; border: 1px dashed #bdcbd8; border-radius: 8px; background: var(--surface-2); color: var(--muted); line-height: 1.45; text-align: center; }
+    .empty-evidence .icon { display: block; width: 24px; height: 24px; margin: 0 auto 8px; color: #788da2; }
+    .quality-list { margin: 15px 0 0; padding: 0; list-style: none; }
+    .quality-list li { display: flex; align-items: flex-start; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--divider); color: var(--muted); font-size: 11.5px; line-height: 1.35; }
+    .quality-list .icon { color: var(--amber); margin-top: 1px; }
+
+    .results-detail { min-width: 0; min-height: 0; display: grid; grid-template-rows: 42px minmax(0, 1fr); }
+    .detail-tabs { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+    .detail-tab { border: 0; border-radius: 0; padding: 0 16px; color: var(--muted); background: transparent; border-bottom: 2px solid transparent; }
+    .detail-tab[aria-selected="true"] { color: var(--blue); background: var(--surface); border-bottom-color: var(--blue); font-weight: 650; }
+    .detail-page { display: none; min-height: 0; padding: 16px; overflow: auto; }
+    .detail-page.active { display: block; }
+    .detail-page .table { margin-top: 10px; }
+    .detail-note { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+    .replica-heading { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--divider); }
+
+    .interpretation-panel { padding: 16px; }
+    .metric-line { position: relative; margin-top: 10px; padding: 11px 12px 11px 38px; border: 1px solid var(--divider); border-radius: 8px; background: var(--surface-2); }
+    .metric-line::before { content: "○"; position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--blue); font: 700 18px var(--sans); }
+    .metric-line span { display: block; color: var(--muted); font-size: 10.5px; }
+    .metric-line strong { display: block; margin-top: 5px; font-size: 13px; font-weight: 650; }
+    .reference-card { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .reference-card p { color: var(--muted); font-size: 11px; line-height: 1.45; }
+
+    .method-list { margin: 12px 0 0; padding-left: 19px; color: var(--muted); line-height: 1.55; }
+    .method-list li { margin-bottom: 8px; }
+
+    .statusbar { display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: #eef3f7; border-top: 1px solid var(--border); color: var(--muted); font-size: 10.5px; }
+    .statusbar span { display: inline-flex; align-items: center; gap: 7px; }
+    .statusbar .icon { width: 13px; height: 13px; }
+
+    /* Modern product finish: restrained depth, clearer hierarchy, stable geometry. */
+    :root {
+      --chrome: #0b2032;
+      --chrome-2: #122b40;
+      --canvas: #eef3f7;
+      --surface-2: #f6f8fb;
+      --surface-3: #eaf0f5;
+      --ink: #10283d;
+      --muted: #587087;
+      --faint: #71869a;
+      --border: #d4dee8;
+      --divider: #e6ecf2;
+      --blue: #145dcc;
+      --blue-hover: #0d4eae;
+      --blue-soft: #eaf2ff;
+      --focus: #4f86e8;
+      --card-radius: 12px;
+      --control-radius: 8px;
+      --card-shadow: 0 1px 2px rgba(10, 32, 50, .035), 0 10px 28px rgba(10, 32, 50, .045);
+    }
+
+    html, body {
+      background: #cfd7df;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    ::selection { color: var(--ink); background: #cfe0ff; }
+
+    .app { border-color: #afbcc8; }
+
+    .topbar {
+      border-bottom-color: #233d51;
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,.035);
+    }
+
+    .brand { gap: 14px; }
+    .brand-name strong { font-weight: 680; letter-spacing: -.025em; }
+    .brand-name span { color: #aebfcd; letter-spacing: .015em; }
+
+    .main-nav { gap: 4px; padding-top: 5px; }
+    .nav-tab {
+      min-height: 59px;
+      border-radius: 9px 9px 0 0;
+      color: #b8c7d3;
+      font-weight: 560;
+      box-shadow: none;
+      transition: color 120ms ease, background-color 120ms ease;
+    }
+    .nav-tab:hover { background: rgba(255,255,255,.05); }
+    .nav-tab[aria-selected="true"] { background: rgba(255,255,255,.075); }
+    .nav-tab[aria-selected="true"]::after { left: 18px; right: 18px; height: 2px; border-radius: 2px 2px 0 0; background: #78a9ff; }
+
+    .top-actions .icon-button { border-radius: 8px; box-shadow: none; }
+    .top-actions .status-inline { color: #c3d0db; }
+
+    .connection-bar {
+      margin: 0;
+      padding: 0 18px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 1px 0 rgba(10,32,50,.02);
+    }
+    .connection-bar::before { display: none; }
+    .connection-group + .connection-group { padding-left: 16px; }
+    .field-label { font-weight: 650; letter-spacing: -.01em; }
+
+    button, select, input {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 1px 1px rgba(10,32,50,.025);
+      transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 100ms ease-out;
+    }
+    button:focus-visible, select:focus-visible, input:focus-visible, [role="tab"]:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 3px rgba(79,134,232,.25), inset 0 0 0 1px var(--focus);
+    }
+    .button { letter-spacing: -.005em; }
+    .button.primary { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(20,93,204,.18); }
+    .button:active:not(:disabled), .icon-button:active:not(:disabled), .subtab:active:not(:disabled) { transform: scale(.98); }
+    .icon-button { border-color: #d7e0e8; }
+
+    .panel-title { font-size: 14.5px; font-weight: 700; letter-spacing: -.018em; }
+    .panel-subtitle { color: #647b90; }
+    .section-title { font-weight: 720; letter-spacing: -.012em; }
+
+    .parameter-panel, .analysis-panel, .inspector-panel,
+    .instrument-pane, .instrument-summary, .experiment-context,
+    .subnav, .experiment-stage, .session-panel, .results-toolbar,
+    .results-summary, .results-detail, .interpretation-panel {
+      border-color: #d1dce6;
+    }
+
+    .control-group {
+      border-color: #e0e7ee;
+      background: #f8fafc;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    .form-row label, .switch-row, .check-row { color: #5f7589; }
+
+    .analysis-heading {
+      background: #fbfcfd;
+      box-shadow: inset 0 -1px 0 rgba(10,32,50,.015);
+    }
+    .plot-shell { background: #fcfdfe; }
+    .empty-state .sensor {
+      width: 48px;
+      height: 48px;
+      padding: 9px;
+      border: 1px solid #dce5ed;
+      border-radius: 12px;
+      color: #6d8295;
+      background: #f5f8fb;
+    }
+    .empty-state strong { font-weight: 720; }
+    .spectrum-key { background: #fbfcfd; }
+
+    .table th { background: #edf3f7; border-color: #d8e2ea; color: #193248; }
+    .table td { border-color: #e4eaf0; }
+    .table tbody tr:nth-child(even) { background: #f8fafc; }
+    .table tbody tr:hover { background: #f0f5fb; }
+
+    .notice-bar { border-color: #cddded; background: #f7fbff; }
+    .lcd { box-shadow: inset 0 0 0 1px rgba(255,255,255,.3), inset 0 8px 18px rgba(76,91,43,.045); }
+    .state-pill { border-radius: 6px; background: #fbfcfd; }
+
+    .subtab { border-left: 0; border-radius: 8px; box-shadow: none; transition: color 120ms ease, background-color 120ms ease, transform 100ms ease-out; }
+    .subtab[aria-selected="true"] { border-left-color: transparent; box-shadow: inset 3px 0 0 var(--blue); }
+    .mode-badge { border-radius: 7px; background: #f7f9fb; }
+    .workflow-step { border-radius: 8px; background: #f7f9fb; }
+    .capture-block { background: #f9fbfc; }
+    .session-status { background: #f7f9fb; }
+
+    .results-detail { grid-template-rows: 44px minmax(0, 1fr); }
+    .detail-tabs { background: #f7f9fb; }
+    .detail-tab { font-weight: 560; box-shadow: none; }
+    .detail-tab[aria-selected="true"] { box-shadow: inset 0 -1px 0 var(--blue); }
+    .empty-evidence { border-color: #c6d3df; background: #f8fafc; }
+    .metric-line { background: #f8fafc; }
+    .statusbar { background: #e9f0f5; border-top-color: #d4dee8; }
+
+    @media (hover: hover) and (pointer: fine) {
+      .button:hover:not(:disabled), .icon-button:hover:not(:disabled) { border-color: #b9c8d6; box-shadow: 0 2px 8px rgba(10,32,50,.07); }
+      .button.primary:hover:not(:disabled) { box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 3px 10px rgba(20,93,204,.22); }
+      .subtab:hover { background: #edf3f8; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      button, select, input, .nav-tab, .subtab { transition: none; }
+      .button:active:not(:disabled), .icon-button:active:not(:disabled), .subtab:active:not(:disabled) { transform: none; }
+    }
+
+    @media (max-width: 1500px) {
+      .connection-bar { grid-template-columns: minmax(440px, auto) minmax(320px, 1fr) auto; }
+      .connection-state { font-size: 11.5px; }
+      .acquisition-view { grid-template-columns: 230px minmax(480px, 1fr) 286px; }
+      .instrument-main { grid-template-columns: minmax(430px, 1.35fr) minmax(280px, .85fr) 290px; }
+      .experiment-body { grid-template-columns: 198px minmax(520px, 1fr) 270px; }
+      .results-body { grid-template-columns: 260px minmax(520px, 1fr) 290px; }
+    }
+
+    @media (max-width: 1320px) {
+      .brand-logo { width: 166px; }
+      .brand-name { display: none; }
+      .topbar { grid-template-columns: minmax(250px, 1fr) auto minmax(190px, 1fr); }
+      .nav-tab { min-width: 96px; padding: 0 10px; }
+      .connection-bar { grid-template-columns: minmax(350px, auto) minmax(260px, 1fr) auto; padding: 8px 10px; gap: 7px; }
+      .connection-group .connection-state { display: none; }
+      .compact-select { min-width: 140px; }
+      .sample-select { width: 160px; }
+      .acquisition-view { grid-template-columns: 238px minmax(462px, 1fr) 270px; }
+      .instrument-main { grid-template-columns: minmax(420px, 1.3fr) minmax(280px, .9fr) 270px; }
+      .experiment-body { grid-template-columns: 190px minmax(520px, 1fr) 260px; }
+      .results-body { grid-template-columns: 250px minmax(520px, 1fr) 280px; }
+    }
+
+    @media (max-height: 850px) {
+      .parameter-panel, .inspector-panel { overflow-y: auto; }
+
+      .instrument-pane { padding: 12px; }
+      .instrument-pane .table { margin-top: 8px; }
+      .instrument-pane .table th,
+      .instrument-pane .table td { height: 24px; }
+      .device-list { margin-top: 8px; }
+      .device-list li { min-height: 31px; }
+      .instrument-pane > .button { margin-top: 8px !important; }
+      .summary-cell { padding: 8px 12px; }
+
+      .experiments-view { grid-template-rows: 120px minmax(0, 1fr); }
+      .experiment-context { margin-top: 8px; padding: 8px 14px; gap: 6px 14px; }
+      .experiment-context .labeled-field label { margin-bottom: 2px; }
+      .experiment-context .labeled-field input,
+      .experiment-context .labeled-field select { height: 28px; }
+      .experiment-body { margin-top: 10px; }
+      .experiment-stage { padding: 14px 16px; }
+      .stage-header { padding-bottom: 10px; }
+      .stage-header p { margin-top: 3px; line-height: 1.35; }
+      .workflow-steps { margin-top: 10px; }
+      .workflow-step { padding-top: 6px; padding-bottom: 6px; }
+      .workflow-step::before { top: 4px; }
+      .capture-grid { margin-top: 10px; }
+      .capture-head { padding: 8px 10px; }
+      .capture-body { padding: 8px 10px; }
+      .capture-status { margin-top: 6px; }
+      .blank-settings { margin-top: 10px; padding-top: 10px; }
+      .blank-row { margin: 8px 0 10px; }
+      .session-panel { padding: 12px; }
+      .session-panel .panel-subtitle { margin-bottom: 8px; }
+      .session-status { padding: 8px; }
+      .result-strip { margin-top: 8px; padding: 8px; }
+      .action-stack { gap: 6px; margin-top: 10px; }
+      .mini-history { margin-top: 10px; }
+    }
+  </style>
+  <link rel="stylesheet" href="web.css">
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.6 2.6 0 1 1 3.2 2.5c-.8.3-.8 1-.8 1.5"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="4"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M9 2v3M12 2v3M15 2v3M9 19v3M12 19v3M15 19v3M2 9h3M2 12h3M2 15h3M19 9h3M19 12h3M19 15h3"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12h4l2-7 4 14 3-10 2 6h5"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 16h9"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 3 2.8 20h18.4z"/><path d="M12 9v5M12 17h.01"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5"/></symbol>
+  </svg>
+
+  <main class="app" aria-label="Aplicación Spectral Lab">
+    <header class="topbar">
+      <div class="brand">
+        <div class="traffic" aria-hidden="true"><span class="close"></span><span class="min"></span><span class="max"></span></div>
+        <img class="brand-logo" src="assets/upch_logo_transparent.png" alt="Universidad Peruana Cayetano Heredia">
+        <div class="brand-name"><strong>Spectral Lab</strong><span>AS7341 Workstation</span></div>
+      </div>
+
+      <nav class="main-nav" role="tablist" aria-label="Secciones principales">
+        <button class="nav-tab" id="tab-acquisition" role="tab" aria-selected="true" aria-controls="view-acquisition" data-view="acquisition">Adquisición</button>
+        <button class="nav-tab" id="tab-instrument" role="tab" aria-selected="false" aria-controls="view-instrument" data-view="instrument">Instrumento</button>
+        <button class="nav-tab" id="tab-experiments" role="tab" aria-selected="false" aria-controls="view-experiments" data-view="experiments">Experimentos</button>
+        <button class="nav-tab" id="tab-results" role="tab" aria-selected="false" aria-controls="view-results" data-view="results">Resultados</button>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-button" aria-label="Ayuda"><svg class="icon"><use href="#i-help"/></svg></button>
+        <button class="icon-button" aria-label="Configuración"><svg class="icon"><use href="#i-settings"/></svg></button>
+        <span class="separator-v" aria-hidden="true"></span>
+        <span class="status-inline"><span class="status-dot"></span>Sin conexión</span>
+      </div>
+    </header>
+
+    <section class="connection-bar" aria-label="Conexión y acciones globales">
+      <div class="connection-group">
+        <span class="field-label">Puerto USB</span>
+        <select class="compact-select" aria-label="Puerto USB"><option>Selecciona un puerto</option></select>
+        <button class="icon-button" aria-label="Actualizar puertos"><svg class="icon"><use href="#i-refresh"/></svg></button>
+        <button class="button primary">Conectar</button>
+        <span class="status-inline connection-state"><span class="status-dot"></span>Desconectado</span>
+      </div>
+      <div class="connection-group">
+        <span class="field-label">Muestra</span>
+        <select class="compact-select sample-select" aria-label="Muestra"><option>Sin asignar</option></select>
+        <button class="button">Nueva muestra</button>
+      </div>
+      <div class="connection-group connection-record">
+        <button class="button danger-quiet" disabled><span class="record-dot"></span>Iniciar grabación</button>
+        <span class="status-inline connection-state"><span class="status-dot"></span>Sin grabar</span>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <section class="view acquisition-view active" id="view-acquisition" role="tabpanel" aria-labelledby="tab-acquisition">
+        <aside class="parameter-panel" aria-label="Parámetros de adquisición">
+          <div class="panel-title">Parámetros de adquisición</div>
+
+          <section class="control-group">
+            <div class="section-title">Sensor AS7341</div>
+            <div class="form-row"><label for="gain">Ganancia</label><select id="gain" disabled><option>128x</option></select></div>
+            <div class="form-row"><label for="integration">Integración</label><select id="integration" disabled><option>300 ms</option></select></div>
+            <div class="form-row"><label for="mode">Modo</label><select id="mode" disabled><option>10 canales</option></select></div>
+            <div class="form-row"><label for="frequency">Frecuencia</label><select id="frequency" disabled><option>Automática</option></select></div>
+          </section>
+
+          <section class="control-group">
+            <div class="section-title">Iluminación</div>
+            <div class="form-row"><label for="pwm">PWM LED</label><select id="pwm" disabled><option>25 %</option></select></div>
+            <div class="form-row"><label for="source">Fuente</label><select id="source" disabled><option>Externa</option></select></div>
+            <div class="form-row"><label>Estado</label><span class="state-pill"><span class="status-dot"></span>Apagada</span></div>
+            <div class="form-row"><button class="button" disabled>Probar LED</button></div>
+          </section>
+
+          <section class="control-group">
+            <div class="section-title">Visualización</div>
+            <div class="form-row"><label for="scale">Escala Y</label><select id="scale"><option>Automática</option></select></div>
+            <div class="form-row"><label for="average">Promedio</label><select id="average"><option>1 lectura</option></select></div>
+            <div class="switch-row"><span>Corrección de blanco</span><span class="status-inline"><span class="switch" aria-hidden="true"></span>Desactivada</span></div>
+            <div class="check-row"><span>Mostrar rejilla</span><span class="check">✓</span></div>
+          </section>
+        </aside>
+
+        <section class="analysis-panel">
+          <header class="analysis-heading">
+            <div><div class="panel-title">Espectro en vivo</div><div class="panel-subtitle">AS7341 · 10 bandas espectrales · cuentas ADC</div></div>
+            <div class="tool-row">
+              <button class="icon-button" aria-label="Ajustar vista"><svg class="icon"><use href="#i-maximize"/></svg></button>
+              <button class="icon-button" aria-label="Cursor de inspección"><svg class="icon"><use href="#i-target"/></svg></button>
+              <button class="icon-button" aria-label="Exportar captura"><svg class="icon"><use href="#i-camera"/></svg></button>
+              <button class="icon-button" aria-label="Opciones del gráfico"><svg class="icon"><use href="#i-more"/></svg></button>
+            </div>
+          </header>
+
+          <div class="plot-shell" aria-label="Gráfico espectral vacío del AS7341">
+            <span class="axis-label-y">Cuentas ADC</span>
+            <svg class="plot-svg" viewBox="0 0 760 500" preserveAspectRatio="none" role="img" aria-label="Ejes de cuentas ADC y longitud de onda sin lecturas">
+              <g stroke="#e5eaf0" stroke-width="1">
+                <line x1="55" y1="30" x2="740" y2="30"/><line x1="55" y1="118" x2="740" y2="118"/><line x1="55" y1="206" x2="740" y2="206"/><line x1="55" y1="294" x2="740" y2="294"/><line x1="55" y1="382" x2="740" y2="382"/><line x1="55" y1="470" x2="740" y2="470"/>
+                <line x1="55" y1="30" x2="55" y2="470"/><line x1="131" y1="30" x2="131" y2="470"/><line x1="207" y1="30" x2="207" y2="470"/><line x1="283" y1="30" x2="283" y2="470"/><line x1="359" y1="30" x2="359" y2="470"/><line x1="435" y1="30" x2="435" y2="470"/><line x1="511" y1="30" x2="511" y2="470"/><line x1="587" y1="30" x2="587" y2="470"/><line x1="663" y1="30" x2="663" y2="470"/><line x1="740" y1="30" x2="740" y2="470"/>
+              </g>
+              <g stroke="#8da0b2" stroke-width="1.2"><line x1="55" y1="30" x2="55" y2="470"/><line x1="55" y1="470" x2="740" y2="470"/></g>
+              <g fill="#52677a" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11">
+                <text x="42" y="474" text-anchor="end">0</text><text x="42" y="386" text-anchor="end">500</text><text x="42" y="298" text-anchor="end">1000</text><text x="42" y="210" text-anchor="end">1500</text><text x="42" y="122" text-anchor="end">2000</text><text x="42" y="34" text-anchor="end">2500</text>
+                <text x="55" y="490" text-anchor="middle">415</text><text x="131" y="490" text-anchor="middle">445</text><text x="207" y="490" text-anchor="middle">480</text><text x="283" y="490" text-anchor="middle">515</text><text x="359" y="490" text-anchor="middle">555</text><text x="435" y="490" text-anchor="middle">590</text><text x="511" y="490" text-anchor="middle">630</text><text x="587" y="490" text-anchor="middle">680</text><text x="663" y="490" text-anchor="middle">NIR</text><text x="740" y="490" text-anchor="middle">Clear</text>
+              </g>
+            </svg>
+            <span class="axis-label-x">Longitud de onda (nm)</span>
+            <div class="empty-state">
+              <svg class="icon sensor"><use href="#i-chip"/></svg>
+              <strong>Sin lecturas</strong>
+              <p>Conecta el Arduino Mega para iniciar la adquisición.</p>
+              <button class="button">Revisar conexión</button>
+            </div>
+          </div>
+
+          <div class="spectrum-key" aria-label="Referencia de bandas espectrales">
+            <div class="spectrum-item"><span class="mark circle" style="--mark:#7048c9"></span><strong>415 nm</strong>F1</div>
+            <div class="spectrum-item"><span class="mark" style="--mark:#2e66d7"></span><strong>445 nm</strong>F2</div>
+            <div class="spectrum-item"><span class="mark triangle" style="--mark:#159bc7"></span><strong>480 nm</strong>F3</div>
+            <div class="spectrum-item"><span class="mark diamond" style="--mark:#2a9b60"></span><strong>515 nm</strong>F4</div>
+            <div class="spectrum-item"><span class="mark triangle" style="--mark:#d2a514"></span><strong>555 nm</strong>F5</div>
+            <div class="spectrum-item"><span class="mark circle" style="--mark:#d8781b"></span><strong>590 nm</strong>F6</div>
+            <div class="spectrum-item"><span class="mark" style="--mark:#d34532"></span><strong>630 nm</strong>F7</div>
+            <div class="spectrum-item"><span class="mark triangle" style="--mark:#9f2f2f"></span><strong>680 nm</strong>F8</div>
+            <div class="spectrum-item"><span class="mark diamond" style="--mark:#626d78"></span><strong>NIR</strong>NIR</div>
+            <div class="spectrum-item"><span class="mark ring" style="--mark:#586775"></span><strong>Clear</strong>Clear</div>
+          </div>
+        </section>
+
+        <aside class="inspector-panel" aria-label="Lectura actual">
+          <div class="panel-title">Lectura actual</div>
+          <div class="panel-subtitle">Valores recibidos del AS7341</div>
+          <table class="table">
+            <thead><tr><th style="width:24%">Canal</th><th>Banda</th><th style="width:28%;text-align:right">Cuenta</th></tr></thead>
+            <tbody>
+              <tr><td>F1</td><td>415 nm</td><td class="numeric">-</td></tr><tr><td>F2</td><td>445 nm</td><td class="numeric">-</td></tr><tr><td>F3</td><td>480 nm</td><td class="numeric">-</td></tr><tr><td>F4</td><td>515 nm</td><td class="numeric">-</td></tr><tr><td>F5</td><td>555 nm</td><td class="numeric">-</td></tr><tr><td>F6</td><td>590 nm</td><td class="numeric">-</td></tr><tr><td>F7</td><td>630 nm</td><td class="numeric">-</td></tr><tr><td>F8</td><td>680 nm</td><td class="numeric">-</td></tr><tr><td>NIR</td><td>Infrarrojo</td><td class="numeric">-</td></tr><tr><td>Clear</td><td>Banda ancha</td><td class="numeric">-</td></tr>
+            </tbody>
+          </table>
+          <section class="context-block">
+            <div class="section-title">Contexto de lectura</div>
+            <div class="context-grid"><span>Muestra</span><span>-</span><span>Tiempo</span><span>-</span><span>Ganancia</span><span>128x</span><span>Integración</span><span>300 ms</span><span>Fuente</span><span>USB</span></div>
+            <button class="button full-width"><svg class="icon"><use href="#i-copy"/></svg>Copiar valores</button>
+          </section>
+        </aside>
+      </section>
+
+      <section class="view instrument-view" id="view-instrument" role="tabpanel" aria-labelledby="tab-instrument" hidden>
+        <div class="notice-bar"><svg class="icon"><use href="#i-info"/></svg><strong>Sin telemetría vigente.</strong> El contenido visible se actualizará cuando el firmware 2.3.0 complete la verificación del enlace.</div>
+        <div class="instrument-main">
+          <section class="instrument-pane">
+            <div class="panel-title">Lectura multicanal a 90°</div>
+            <div class="panel-subtitle">Vista completa del modo IO Rodeo · raw sin normalizar</div>
+            <table class="table">
+              <thead><tr><th style="width:22%">Canal</th><th>Banda</th><th style="width:30%;text-align:right">Cuenta raw</th></tr></thead>
+              <tbody>
+                <tr><td>F1</td><td>415 nm</td><td class="numeric">-</td></tr><tr><td>F2</td><td>445 nm</td><td class="numeric">-</td></tr><tr><td>F3</td><td>480 nm</td><td class="numeric">-</td></tr><tr><td>F4</td><td>515 nm</td><td class="numeric">-</td></tr><tr><td>F5</td><td>555 nm</td><td class="numeric">-</td></tr><tr><td>F6</td><td>590 nm</td><td class="numeric">-</td></tr><tr><td>F7</td><td>630 nm</td><td class="numeric">-</td></tr><tr><td>F8</td><td>680 nm</td><td class="numeric">-</td></tr><tr><td>NIR</td><td>Infrarrojo cercano</td><td class="numeric">-</td></tr><tr><td>Clear</td><td>Banda ancha</td><td class="numeric">-</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="instrument-pane lcd-wrap">
+            <div><div class="panel-title">Pantalla física OLED</div><div class="panel-subtitle">Espejo textual enviado por el firmware</div></div>
+            <div class="lcd">Esperando líneas
+del firmware</div>
+            <div class="lcd-foot"><span>Página física: -</span><label class="toggle-line"><input type="checkbox" checked disabled> Alternar cada 3 s</label></div>
+          </section>
+
+          <aside class="instrument-pane">
+            <div class="panel-title">Instrumento</div>
+            <div class="panel-subtitle">Disponibilidad y capacidades negociadas</div>
+            <ul class="device-list">
+              <li><span>Firmware requerido</span><strong>2.3.0</strong></li>
+              <li><span>Protocolo</span><strong>JSON Lines v2</strong></li>
+              <li><span>AS7341</span><span class="state-pill"><span class="status-dot"></span>Esperando</span></li>
+              <li><span>Pantalla OLED</span><span class="state-pill"><span class="status-dot"></span>Esperando</span></li>
+              <li><span>Control PWM D11</span><span class="state-pill"><span class="status-dot"></span>No verificado</span></li>
+              <li><span>Baudios</span><strong>115200</strong></li>
+            </ul>
+            <button class="button full-width" style="margin-top:14px">Verificar capacidades</button>
+          </aside>
+        </div>
+
+        <div class="instrument-summary" aria-label="Estado completo del modo IO Rodeo">
+          <div class="summary-cell"><span>Muestra</span><strong>-</strong></div><div class="summary-cell"><span>Tiempo Mega</span><strong>-</strong></div><div class="summary-cell"><span>Ganancia</span><strong>-</strong></div><div class="summary-cell"><span>Integración</span><strong>-</strong></div>
+          <div class="summary-cell"><span>AS7341 90°</span><strong>Esperando</strong></div><div class="summary-cell"><span>TSL 180°</span><strong>N/D</strong></div><div class="summary-cell"><span>Relative Units</span><strong>N/D</strong></div><div class="summary-cell"><span>Batería</span><strong>N/D (USB)</strong></div>
+        </div>
+      </section>
+
+      <section class="view experiments-view" id="view-experiments" role="tabpanel" aria-labelledby="tab-experiments" hidden>
+        <div class="experiment-context">
+          <div class="labeled-field"><label for="sample-id">Muestra</label><input id="sample-id" placeholder="ID para repetir el ensayo"></div>
+          <div class="labeled-field"><label for="optical-protocol">Protocolo óptico</label><input id="optical-protocol" placeholder="LED A/B, filtros, geometría y corriente"></div>
+          <div class="labeled-field"><label for="capture-count">Lecturas por captura</label><input id="capture-count" value="5" type="number" min="1" max="100"></div>
+          <div class="labeled-field"><label for="settle-time">Espera tras el clic</label><input id="settle-time" value="1000 ms"></div>
+          <div class="labeled-field span-2"><label for="capture-notes">Notas de captura</label><input id="capture-notes" placeholder="Recipiente, posición y observaciones"></div>
+          <div class="labeled-field span-2"><label for="exposure">Exposición actual</label><input id="exposure" placeholder="LED, filtro y posición de lectura"></div>
+        </div>
+
+        <div class="experiment-body">
+          <nav class="subnav" role="tablist" aria-label="Modos de experimento">
+            <div class="subnav-label">Método</div>
+            <button class="subtab" id="tab-exp-led" role="tab" aria-selected="true" aria-controls="experiment-led" data-experiment="led"><svg class="icon"><use href="#i-wave"/></svg>LED sucesivos</button>
+            <button class="subtab" id="tab-exp-reference" role="tab" aria-selected="false" aria-controls="experiment-reference" data-experiment="reference"><svg class="icon"><use href="#i-target"/></svg>Baseline y referencia</button>
+            <button class="subtab" id="tab-exp-calibration" role="tab" aria-selected="false" aria-controls="experiment-calibration" data-experiment="calibration"><svg class="icon"><use href="#i-chart"/></svg>Curva de calibración</button>
+            <button class="subtab" id="tab-exp-background" role="tab" aria-selected="false" aria-controls="experiment-background" data-experiment="background"><svg class="icon"><use href="#i-flask"/></svg>Blanco y fondo</button>
+          </nav>
+
+          <section class="experiment-stage">
+            <article class="experiment-page active" id="experiment-led" role="tabpanel" aria-labelledby="tab-exp-led">
+              <header class="stage-header"><div><h2>Cociente con LED sucesivos</h2><p>Coloca LED A, espera estabilidad y captura A. Cambia manualmente a LED B y captura B. El resultado instrumental se conserva como R = A / B.</p></div><span class="mode-badge"><svg class="icon"><use href="#i-file"/></svg>Ensayo trazable</span></header>
+              <div class="workflow-steps" aria-label="Progreso del ensayo">
+                <div class="workflow-step current" data-step="1">Preparar</div>
+                <div class="workflow-step" data-step="2">Capturar A</div>
+                <div class="workflow-step" data-step="3">Capturar B</div>
+                <div class="workflow-step" data-step="4">Calcular</div>
+              </div>
+              <div class="capture-grid">
+                <section class="capture-block"><div class="capture-head"><strong>Exposición A · LED A</strong><span class="status-inline connection-state"><span class="status-dot"></span>Pendiente</span></div><div class="capture-body"><div class="inline-form"><select aria-label="Canal de LED A"><option>415</option><option>445</option><option>480</option><option>515</option><option>555</option><option>590</option><option>630</option><option>680</option><option>NIR</option><option>Clear</option></select><button class="button" disabled>Capturar LED A</button></div><p class="capture-status">Sin captura</p></div></section>
+                <section class="capture-block"><div class="capture-head"><strong>Exposición B · LED B</strong><span class="status-inline connection-state"><span class="status-dot"></span>Pendiente</span></div><div class="capture-body"><div class="inline-form"><select aria-label="Canal de LED B"><option>415</option><option>445</option><option>480</option><option>515</option><option>555</option><option>590</option><option>630</option><option>680</option><option>NIR</option><option>Clear</option></select><button class="button" disabled>Capturar LED B</button></div><p class="capture-status">Sin captura</p></div></section>
+              </div>
+              <div class="blank-settings"><label class="toggle-line"><input type="checkbox"> Restar un blanco compatible a cada exposición</label><div class="blank-row"><label>Blanco A</label><select aria-label="Blanco compatible para LED A"><option>Selecciona un blanco guardado</option></select><label>Blanco B</label><select aria-label="Blanco compatible para LED B"><option>Selecciona un blanco guardado</option></select></div><button class="button primary full-width" disabled>Calcular y guardar cociente</button></div>
+            </article>
+
+            <article class="experiment-page" id="experiment-reference" role="tabpanel" aria-labelledby="tab-exp-reference" hidden>
+              <header class="stage-header"><div><h2>Baseline y referencia óptica</h2><p>Captura la señal y luego la referencia. Q = señal / referencia. El blanco y la referencia óptica conservan significados distintos en el registro.</p></div><span class="mode-badge"><svg class="icon"><use href="#i-target"/></svg>Referencia declarada</span></header>
+              <div class="labeled-field" style="margin-top:14px"><label for="reference-kind">La referencia representa</label><select id="reference-kind"><option>Luz de excitación medida directamente</option><option>Blanco sin fluoróforo</option><option>Emisión basal del fluoróforo</option></select></div>
+              <div class="capture-grid">
+                <section class="capture-block"><div class="capture-head"><strong>Señal del fluorómetro</strong><span class="status-inline connection-state"><span class="status-dot"></span>Pendiente</span></div><div class="capture-body"><div class="inline-form"><select aria-label="Canal de la señal"><option>415</option><option>445</option><option>480</option><option>515</option><option>555</option><option>590</option><option>630</option><option>680</option></select><button class="button" disabled>Capturar señal</button></div><p class="capture-status">Sin captura</p></div></section>
+                <section class="capture-block"><div class="capture-head"><strong>Referencia óptica</strong><span class="status-inline connection-state"><span class="status-dot"></span>Pendiente</span></div><div class="capture-body"><div class="inline-form"><select aria-label="Canal de la referencia óptica"><option>415</option><option>445</option><option>480</option><option>515</option><option>555</option><option>590</option><option>630</option><option>680</option></select><button class="button" disabled>Capturar referencia</button></div><p class="capture-status">Sin captura</p></div></section>
+              </div>
+              <div class="blank-settings"><label class="toggle-line"><input type="checkbox"> Restar un blanco compatible a cada exposición</label><div class="blank-row"><label>Blanco señal</label><select aria-label="Blanco compatible con la señal"><option>Selecciona un blanco guardado</option></select><label>Blanco referencia</label><select aria-label="Blanco compatible con la referencia"><option>Selecciona un blanco guardado</option></select></div><button class="button primary full-width" disabled>Calcular y guardar cociente</button></div>
+            </article>
+
+            <article class="experiment-page" id="experiment-calibration" role="tabpanel" aria-labelledby="tab-exp-calibration" hidden>
+              <header class="stage-header"><div><h2>Curva de calibración</h2><p>Guarda estándares conocidos y ajusta una recta con el mismo instrumento, canal, método y protocolo óptico.</p></div><span class="mode-badge"><svg class="icon"><use href="#i-chart"/></svg>Mínimo 3 niveles</span></header>
+              <div class="calibration-layout">
+                <div class="form-stack">
+                  <div class="labeled-field"><label>Concentración</label><input aria-label="Concentración conocida" type="number" value="0" min="0"></div>
+                  <div class="labeled-field"><label>Unidad</label><input aria-label="Unidad de concentración" value="µmol/L"></div>
+                  <div class="labeled-field"><label>Fuente de señal</label><select aria-label="Fuente de señal para calibración"><option>Intensidad de un canal</option><option>Último cociente guardado</option><option>Intensidad con blanco</option></select></div>
+                  <div class="labeled-field"><label>Canal</label><select aria-label="Canal para calibración"><option>415</option><option>445</option><option>480</option><option>515</option><option>555</option><option>590</option><option>630</option><option>680</option></select></div>
+                  <div class="labeled-field"><label>Blanco para intensidad corregida</label><select aria-label="Blanco para intensidad corregida"><option>Selecciona un blanco guardado</option></select></div>
+                  <button class="button primary" disabled>Guardar punto</button><button class="button" disabled>Ajustar curva lineal</button><button class="button">Deshacer último punto</button>
+                </div>
+                <div class="calibration-plot"><svg viewBox="0 0 520 290" role="img" aria-label="Gráfico vacío de calibración"><g stroke="#e5eaf0"><line x1="55" y1="20" x2="500" y2="20"/><line x1="55" y1="80" x2="500" y2="80"/><line x1="55" y1="140" x2="500" y2="140"/><line x1="55" y1="200" x2="500" y2="200"/><line x1="55" y1="260" x2="500" y2="260"/><line x1="55" y1="20" x2="55" y2="260"/><line x1="165" y1="20" x2="165" y2="260"/><line x1="275" y1="20" x2="275" y2="260"/><line x1="385" y1="20" x2="385" y2="260"/><line x1="500" y1="20" x2="500" y2="260"/></g><g stroke="#8da0b2" stroke-width="1.2"><line x1="55" y1="20" x2="55" y2="260"/><line x1="55" y1="260" x2="500" y2="260"/></g><text x="277" y="132" text-anchor="middle" fill="#52677a" font-family="-apple-system, sans-serif" font-size="13">Sin puntos de calibración</text><text x="277" y="151" text-anchor="middle" fill="#718397" font-family="-apple-system, sans-serif" font-size="11">Guarda al menos tres concentraciones distintas</text></svg></div>
+              </div>
+            </article>
+
+            <article class="experiment-page" id="experiment-background" role="tabpanel" aria-labelledby="tab-exp-background" hidden>
+              <header class="stage-header"><div><h2>Blanco y corrección de fondo</h2><p>Usa solvente o matriz sin fluoróforo con el mismo recipiente y exposición. La resta conserva valores negativos y no convierte lecturas internas en réplicas del ensayo.</p></div><span class="mode-badge"><svg class="icon"><use href="#i-flask"/></svg>Fondo separado</span></header>
+              <div class="capture-grid">
+                <section class="capture-block"><div class="capture-head"><strong>Captura de blanco</strong><span class="status-inline connection-state"><span class="status-dot"></span>Pendiente</span></div><div class="capture-body"><div class="inline-form"><select aria-label="Canal del blanco"><option>415</option><option>445</option><option>480</option><option>515</option><option>555</option><option>590</option><option>630</option><option>680</option></select><button class="button" disabled>Capturar blanco</button></div><p class="capture-status">Sin captura</p></div></section>
+                <section class="capture-block"><div class="capture-head"><strong>Señal de muestra</strong><span class="status-inline connection-state"><span class="status-dot"></span>Pendiente</span></div><div class="capture-body"><div class="inline-form"><select aria-label="Canal de la señal de muestra"><option>415</option><option>445</option><option>480</option><option>515</option><option>555</option><option>590</option><option>630</option><option>680</option></select><button class="button" disabled>Capturar señal</button></div><p class="capture-status">Sin captura</p></div></section>
+              </div>
+              <div class="blank-settings"><div class="blank-row" style="grid-template-columns:1fr 1fr"><select aria-label="Señal guardada"><option>Selecciona una señal guardada</option></select><select aria-label="Blanco compatible"><option>Selecciona un blanco compatible</option></select></div><button class="button primary full-width" disabled>Guardar intensidad corregida</button><table class="table" style="margin-top:14px"><thead><tr><th>ID</th><th>Exposición</th><th>Canal</th><th>Media raw</th><th>Lecturas</th></tr></thead><tbody><tr><td colspan="5" class="muted" style="text-align:center">Sin capturas guardadas</td></tr></tbody></table></div>
+            </article>
+          </section>
+
+          <aside class="session-panel">
+            <div class="panel-title">Sesión experimental</div>
+            <div class="panel-subtitle">Evidencia, historial y exportación</div>
+            <div class="session-status">Conecta el Mega. Cada captura recoge muestras posteriores al clic y conserva la configuración activa.</div>
+            <div class="result-strip"><strong>Resultado</strong><br><span class="muted">Sin resultados guardados</span></div>
+            <div class="action-stack"><button class="button">Guardar experimento JSON</button><button class="button">Abrir experimento JSON</button><button class="button">Exportar puntos CSV</button></div>
+            <div class="mini-history"><div class="section-title">Historial del ensayo</div><table class="table"><thead><tr><th>Ensayo</th><th>Resultado</th></tr></thead><tbody><tr><td colspan="2" class="muted" style="text-align:center">Sin evidencia</td></tr></tbody></table></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view results-view" id="view-results" role="tabpanel" aria-labelledby="tab-results" hidden>
+        <div class="results-toolbar">
+          <div class="results-title"><strong>Resultados trazables</strong><span>Calidad experimental e interpretación</span></div>
+          <select aria-label="Evidencia experimental"><option>Sin evidencia guardada</option></select>
+          <button class="button">Abrir experimento JSON</button>
+          <button class="button">Exportar resultados CSV</button>
+          <label class="criteria">Avisar si referencia ≤ <input aria-label="Umbral de referencia baja" value="1 cuenta"></label>
+        </div>
+
+        <div class="results-body">
+          <aside class="results-summary">
+            <div class="panel-title">Resumen</div><div class="panel-subtitle">Estado de la evidencia seleccionada</div>
+            <div class="empty-evidence"><svg class="icon"><use href="#i-file"/></svg>Sin evidencia guardada. Captura un ensayo en Experimentos o abre un archivo JSON para revisar sus componentes.</div>
+            <ul class="quality-list">
+              <li><svg class="icon"><use href="#i-warning"/></svg><span>La interpretación no modifica los datos raw ni la lectura en vivo.</span></li>
+              <li><svg class="icon"><use href="#i-info"/></svg><span>El criterio de referencia es operativo y editable. No equivale a LOD ni LOQ.</span></li>
+              <li><svg class="icon"><use href="#i-check"/></svg><span>El JSON conserva capturas, configuración, resultados y trazabilidad.</span></li>
+            </ul>
+          </aside>
+
+          <section class="results-detail">
+            <nav class="detail-tabs" role="tablist" aria-label="Detalle de resultados">
+              <button class="detail-tab" id="tab-detail-signals" role="tab" aria-selected="true" aria-controls="detail-signals" data-detail="signals">Señales y réplicas</button>
+              <button class="detail-tab" id="tab-detail-interpretation" role="tab" aria-selected="false" aria-controls="detail-interpretation" data-detail="interpretation">Calibración e interpretación</button>
+              <button class="detail-tab" id="tab-detail-methods" role="tab" aria-selected="false" aria-controls="detail-methods" data-detail="methods">Métodos y bibliografía</button>
+            </nav>
+
+            <article class="detail-page active" id="detail-signals" role="tabpanel" aria-labelledby="tab-detail-signals">
+              <div class="section-title">Componentes del resultado</div>
+              <p class="detail-note">Media y desviación estándar de las lecturas internas. No representan por sí solas la incertidumbre del ensayo.</p>
+              <table class="table"><thead><tr><th>Componente</th><th>Canal</th><th>Valor</th><th>SD</th><th>N</th><th>Ganancia</th><th>Integración</th><th>PWM</th></tr></thead><tbody><tr><td colspan="8" class="muted" style="text-align:center">Selecciona una evidencia para mostrar sus componentes</td></tr></tbody></table>
+              <div class="replica-heading"><div><div class="section-title">Ensayos completos</div><div class="panel-subtitle">Réplicas compatibles de la misma muestra y método</div></div><span class="mode-badge">n = 0</span></div>
+              <table class="table"><thead><tr><th>Ensayo</th><th>Muestra</th><th>Resultado</th><th>Señales ID</th><th>Blancos ID</th></tr></thead><tbody><tr><td colspan="5" class="muted" style="text-align:center">Sin réplicas completas disponibles</td></tr></tbody></table>
+            </article>
+
+            <article class="detail-page" id="detail-interpretation" role="tabpanel" aria-labelledby="tab-detail-interpretation" hidden>
+              <div class="section-title">Inversión de la curva compatible</div><p class="detail-note">La concentración solo se informa cuando el método, canal, ganancia, integración, PWM y protocolo son compatibles con el ajuste guardado.</p>
+              <div class="empty-evidence">Sin curva compatible para la evidencia actual.</div>
+              <table class="table"><thead><tr><th>Concentración estándar</th><th>Señal medida</th><th>Señal ajustada</th><th>Residuo</th><th>Unidad</th></tr></thead><tbody><tr><td colspan="5" class="muted" style="text-align:center">Sin residuos de calibración</td></tr></tbody></table>
+            </article>
+
+            <article class="detail-page" id="detail-methods" role="tabpanel" aria-labelledby="tab-detail-methods" hidden>
+              <div class="section-title">Método y límites de interpretación</div>
+              <ol class="method-list"><li>El cociente instrumental conserva las señales A y B, los blancos compatibles y la configuración de adquisición.</li><li>La corrección de fondo no elimina artefactos producidos por un denominador bajo o ruidoso.</li><li>La curva se invierte únicamente dentro del intervalo calibrado y sin extrapolación automática.</li><li>Las lecturas internas de una captura estiman repetibilidad inmediata; las réplicas exigen ensayos completos.</li></ol>
+              <div class="section-title" style="margin-top:18px">Referencias documentadas</div><p class="detail-note">Las fuentes verificadas y sus alcances se conservan en SCIENTIFIC_NOTES.md junto con la versión del procedimiento.</p>
+            </article>
+          </section>
+
+          <aside class="interpretation-panel">
+            <div class="panel-title">Interpretación</div><div class="panel-subtitle">Conclusiones permitidas por la evidencia</div>
+            <div class="metric-line"><span>Concentración estimada</span><strong>Sin curva compatible</strong></div>
+            <div class="metric-line"><span>Calidad de referencia</span><strong>No evaluable</strong></div>
+            <div class="metric-line"><span>Réplicas completas</span><strong class="mono">0</strong></div>
+            <div class="reference-card"><div class="section-title">Criterio aplicado</div><p>No se informa concentración si la referencia es baja, existe saturación, la señal corregida no es positiva o la firma del método no coincide.</p><button class="button full-width" disabled>Copiar informe</button></div>
+          </aside>
+        </div>
+      </section>
+    </section>
+
+    <footer class="statusbar"><span><svg class="icon"><use href="#i-info"/></svg>Esperando conexión con el instrumento</span><span class="mono">115200 baudios</span></footer>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

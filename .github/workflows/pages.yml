@@ -1,0 +1,37 @@
+name: Publicar Spectral Lab Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Software/Arduino_Mega_AS7341_GUI/v2.0/web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v6
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Preparar sitio estático
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: Software/Arduino_Mega_AS7341_GUI/v2.0/web
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
