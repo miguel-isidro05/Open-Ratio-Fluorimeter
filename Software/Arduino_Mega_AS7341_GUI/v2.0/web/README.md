@@ -23,6 +23,8 @@ No necesita servidor Python. El navegador se comunica directamente con el Arduin
 
 El permiso serial queda bajo control del navegador. La página no puede elegir un dispositivo ni abrirlo sin una acción del usuario.
 
+La gráfica espectral muestra únicamente las bandas visibles F1–F8, entre 415 y 680 nm. NIR y Clear se conservan como lecturas raw en las tablas y en los flujos experimentales, pero no se incorporan a la curva visible.
+
 ## Desarrollo local
 
 Desde esta carpeta:
@@ -39,4 +41,4 @@ Abre `http://127.0.0.1:8766/`. No abras `index.html` mediante `file://`, porque 
 node --test tests/*.test.mjs
 ```
 
-Las pruebas cubren el contrato serial y los cálculos de captura, blanco, cociente y calibración. La comprobación final debe hacerse con el Arduino conectado.
+Las pruebas cubren el contrato serial, la transición de la curva y los cálculos de captura, blanco, cociente y calibración. La comprobación final debe hacerse con el Arduino conectado.

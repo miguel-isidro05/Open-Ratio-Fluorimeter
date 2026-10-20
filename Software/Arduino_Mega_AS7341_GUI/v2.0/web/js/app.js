@@ -1,5 +1,6 @@
 import { CHANNEL_KEYS, GAINS, INTEGRATION_TIMES, command, parseTelemetry } from "./protocol.mjs";
 import { buildCapture, intensityResult, linearFit, ratioResult, uuid32 } from "./analysis.mjs";
+import { PLOT_ANIMATION_MS, interpolatePlotValues } from "./plot.mjs";
 import { WebSerialClient } from "./serial.mjs";
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -13,6 +14,8 @@ const state = {
   grantedPorts: [],
   lastFrame: null,
   frameHistory: [],
+  plotValues: null,
+  plotAnimationFrame: null,
   deviceState: null,
   recording: false,
   recordingRows: [],
@@ -301,7 +304,7 @@ function handleTelemetry(frame) {
   state.frameHistory.push(frame);
   state.frameHistory = state.frameHistory.slice(-20);
   updateReadings(frame);
-  renderPlot();
+  renderPlot({ animate: true });
   if (state.recording) state.recordingRows.push(recordingRow(frame));
   collectCapture(frame);
 }
@@ -334,7 +337,9 @@ function averagedChannels() {
   const count = Number(ui.average.value);
   const frames = state.frameHistory.slice(-count);
   if (!frames.length) return null;
-  return CHANNEL_KEYS.map((key) => frames.reduce((sum, frame) => sum + frame.channels[key], 0) / frames.length);
+  return CHANNEL_KEYS.slice(0, 8).map((key) => (
+    frames.reduce((sum, frame) => sum + frame.channels[key], 0) / frames.length
+  ));
 }
 
 function niceMaximum(value) {
@@ -345,8 +350,37 @@ function niceMaximum(value) {
   return Math.min(65535, step * magnitude);
 }
 
-function renderPlot() {
-  const values = averagedChannels();
+function renderPlot(options = {}) {
+  const target = averagedChannels();
+  if (state.plotAnimationFrame !== null) {
+    window.cancelAnimationFrame(state.plotAnimationFrame);
+    state.plotAnimationFrame = null;
+  }
+  if (!target) {
+    state.plotValues = null;
+    drawPlot(null);
+    return;
+  }
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!options.animate || reduceMotion) {
+    state.plotValues = target.slice();
+    drawPlot(state.plotValues);
+    return;
+  }
+
+  const start = state.plotValues?.slice() ?? target.map(() => 0);
+  const startedAt = performance.now();
+  const advance = (now) => {
+    const progress = Math.min(1, (now - startedAt) / PLOT_ANIMATION_MS);
+    state.plotValues = interpolatePlotValues(start, target, progress);
+    drawPlot(state.plotValues);
+    if (progress < 1) state.plotAnimationFrame = window.requestAnimationFrame(advance);
+    else state.plotAnimationFrame = null;
+  };
+  state.plotAnimationFrame = window.requestAnimationFrame(advance);
+}
+
+function drawPlot(values) {
   let layer = $("#live-series", ui.plotSvg);
   if (!layer) {
     layer = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -357,7 +391,7 @@ function renderPlot() {
   if (!values) return;
   const finite = values.filter((value) => value < 65535);
   const maximum = ui.scale.value === "auto" ? niceMaximum(Math.max(...finite, 1) * 1.08) : Number(ui.scale.value);
-  const xs = [55, 131, 207, 283, 359, 435, 511, 587, 663, 740];
+  const xs = [55, 132.55, 222.98, 313.4, 416.79, 507.26, 610.66, 740];
   const points = values.map((value, index) => value >= 65535 || value > maximum
     ? null : [xs[index], 470 - (value / maximum) * 440]);
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");

@@ -36,6 +36,7 @@
 .live-line {
   fill: none;
   stroke: #1457c8;
+  stroke: url(#spectral-line-gradient);
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -49,16 +50,14 @@
   vector-effect: non-scaling-stroke;
 }
 
-.band-0 { stroke: #7048c9; }
-.band-1 { stroke: #2e66d7; }
-.band-2 { stroke: #159bc7; }
-.band-3 { stroke: #2a9b60; }
-.band-4 { stroke: #b28b0b; }
-.band-5 { stroke: #c76715; }
-.band-6 { stroke: #c23b2b; }
-.band-7 { stroke: #942c2c; }
-.band-8 { stroke: #626d78; }
-.band-9 { stroke: #586775; }
+.band-0 { stroke: #6d28d9; }
+.band-1 { stroke: #2563eb; }
+.band-2 { stroke: #0891b2; }
+.band-3 { stroke: #15803d; }
+.band-4 { stroke: #65a30d; }
+.band-5 { stroke: #d97706; }
+.band-6 { stroke: #ea580c; }
+.band-7 { stroke: #b91c1c; }
 
 .instrument-main .instrument-pane:first-child tbody tr {
   cursor: pointer;
