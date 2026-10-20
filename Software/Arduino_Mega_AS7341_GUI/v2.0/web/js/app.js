@@ -1,6 +1,6 @@
 import { CHANNEL_KEYS, GAINS, INTEGRATION_TIMES, command, parseTelemetry } from "./protocol.mjs";
 import { buildCapture, intensityResult, linearFit, ratioResult, uuid32 } from "./analysis.mjs";
-import { PLOT_ANIMATION_MS, interpolatePlotValues } from "./plot.mjs";
+import { PLOT_ANIMATION_MS, interpolatePlotValues, smoothSvgPath } from "./plot.mjs";
 import { WebSerialClient } from "./serial.mjs";
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -396,7 +396,7 @@ function drawPlot(values) {
     ? null : [xs[index], 470 - (value / maximum) * 440]);
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("class", "live-line");
-  path.setAttribute("d", points.map((point, index) => point ? `${index === 0 || !points[index - 1] ? "M" : "L"}${point[0]} ${point[1]}` : "").join(" "));
+  path.setAttribute("d", smoothSvgPath(points));
   layer.append(path);
   points.forEach((point, index) => {
     if (!point) return;
