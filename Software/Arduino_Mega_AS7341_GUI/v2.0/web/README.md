@@ -19,7 +19,8 @@ No necesita servidor Python. El navegador se comunica directamente con el Arduin
 2. Abre la página y pulsa **Conectar**.
 3. Selecciona el puerto del Mega en el diálogo del navegador.
 4. Espera la verificación del firmware, el AS7341, la OLED y el PWM.
-5. Trabaja desde Adquisición, Instrumento, Experimentos o Resultados.
+5. En Adquisición, selecciona el porcentaje y pulsa **Aplicar PWM**. Un valor de 0 % apaga la salida D11; cualquier valor mayor aplica ese ciclo de trabajo.
+6. Trabaja desde Adquisición, Instrumento, Experimentos o Resultados.
 
 El permiso serial queda bajo control del navegador. La página no puede elegir un dispositivo ni abrirlo sin una acción del usuario.
 

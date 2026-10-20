@@ -42,7 +42,7 @@ La versión web usa el mismo protocolo JSON Lines v2 y firmware 2.3.0 que la apl
 
 1. Selecciona el puerto USB y conecta el instrumento.
 2. Confirma la verificación del AS7341, la pantalla y el control PWM.
-3. Ajusta ganancia, integración y PWM antes de iniciar una serie.
+3. Ajusta ganancia e integración. Para modificar la iluminación, selecciona el porcentaje y pulsa **Aplicar PWM**.
 4. Asigna una muestra y registra el protocolo óptico.
 5. Guarda el experimento en JSON y exporta los datos necesarios a CSV.
 

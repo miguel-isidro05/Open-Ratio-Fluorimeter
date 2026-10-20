@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decodeMessage, displayLines, parseTelemetry, ProtocolError } from "../js/protocol.mjs";
+import { command, decodeMessage, displayLines, encodeMessage, parseTelemetry, ProtocolError } from "../js/protocol.mjs";
 
 function frame(overrides = {}) {
   const channels = Object.fromEntries([
@@ -32,4 +32,8 @@ test("rechaza un espejo OLED que no corresponde a la telemetría", () => {
   const invalid = frame({ display_lines: ["alterado"] });
   invalid.display_lines = ["alterado"];
   assert.throws(() => parseTelemetry(invalid), /pantalla/);
+});
+
+test("codifica la orden explícita para aplicar el PWM", () => {
+  assert.equal(encodeMessage(command("set_pwm", 50)), '{"type":"command","command":"set_pwm","value":50}\n');
 });

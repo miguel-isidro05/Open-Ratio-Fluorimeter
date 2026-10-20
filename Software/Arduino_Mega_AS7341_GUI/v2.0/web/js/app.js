@@ -17,6 +17,9 @@ const state = {
   plotValues: null,
   plotAnimationFrame: null,
   deviceState: null,
+  devicePwm: 25,
+  pwmDirty: false,
+  pwmApplying: false,
   recording: false,
   recordingRows: [],
   pending: null,
@@ -89,6 +92,7 @@ function bindUi() {
   ui.gain = $("#gain");
   ui.integration = $("#integration");
   ui.pwm = $("#pwm");
+  ui.pwmApply = $("#apply-pwm");
   ui.scale = $("#scale");
   ui.average = $("#average");
   ui.plotSvg = $(".plot-svg");
@@ -131,7 +135,8 @@ function bindUi() {
   ui.recordButton.addEventListener("click", toggleRecording);
   ui.gain.addEventListener("change", () => changeSetting(command("set_gain", ui.gain.value)));
   ui.integration.addEventListener("change", () => changeSetting(command("set_integration", ui.integration.value)));
-  ui.pwm.addEventListener("change", () => changeSetting(command("set_pwm", Number(ui.pwm.value))));
+  ui.pwm.addEventListener("change", stagePwm);
+  ui.pwmApply.addEventListener("click", applyPwm);
   ui.scale.addEventListener("change", renderPlot);
   ui.average.addEventListener("change", renderPlot);
   ui.copyValuesButton.addEventListener("click", copyCurrentValues);
@@ -170,6 +175,45 @@ function fillSelect(select, values, selected, label = (value) => value) {
     option.selected = value === selected;
     return option;
   }));
+}
+
+function stagePwm() {
+  state.pwmDirty = Number(ui.pwm.value) !== state.devicePwm;
+  state.pwmApplying = false;
+  updatePwmApplyButton();
+}
+
+function updatePwmApplyButton() {
+  ui.pwmApply.disabled = !state.verified || !state.pwmDirty || state.pwmApplying;
+  ui.pwmApply.textContent = state.pwmApplying ? "Aplicando…" : "Aplicar PWM";
+}
+
+async function applyPwm() {
+  if (!state.verified || !state.pwmDirty || state.pwmApplying) return;
+  const value = Number(ui.pwm.value);
+  state.pwmApplying = true;
+  updatePwmApplyButton();
+  showMessage(`Enviando PWM ${value} % al Arduino Mega…`);
+  const sent = await changeSetting(command("set_pwm", value));
+  if (!sent) {
+    state.pwmApplying = false;
+    updatePwmApplyButton();
+  }
+}
+
+function syncPwmFromDevice(value) {
+  const pwm = Number(value);
+  if (!Number.isInteger(pwm) || pwm < 0 || pwm > 100) return;
+  state.devicePwm = pwm;
+  const selected = Number(ui.pwm.value);
+  if (!state.pwmDirty || selected === pwm) {
+    const confirmed = state.pwmApplying && selected === pwm;
+    ui.pwm.value = String(pwm);
+    state.pwmDirty = false;
+    state.pwmApplying = false;
+    if (confirmed) showMessage(`PWM aplicado: ${pwm} %.`, "success");
+  }
+  updatePwmApplyButton();
 }
 
 function portName(port, index) {
@@ -218,6 +262,12 @@ function setConnected(connected, info = null) {
     label.classList.toggle("connected", connected);
   });
   [ui.gain, ui.integration, ui.pwm, ui.autoPage, ui.verifyButton].forEach((control) => { control.disabled = !connected; });
+  if (!connected) {
+    state.pwmDirty = false;
+    state.pwmApplying = false;
+    ui.pwm.value = String(state.devicePwm);
+  }
+  updatePwmApplyButton();
   ui.recordButton.disabled = !connected;
   updateCaptureButtons();
   if (!connected) {
@@ -254,7 +304,12 @@ function handleMessage(message) {
       sensor_config_failed: "No se pudo aplicar la configuración del AS7341.",
       sensor_read_failed: "Falló una lectura del AS7341.",
       capture_invalid: "La solicitud de captura no es válida.",
+      pwm_invalid: "El firmware rechazó el valor PWM.",
     };
+    if (message.code === "pwm_invalid") {
+      state.pwmApplying = false;
+      updatePwmApplyButton();
+    }
     showMessage(meanings[message.code] ?? `Error del instrumento: ${message.code}`, "error");
   }
 }
@@ -270,7 +325,6 @@ function handleDeviceState(device) {
   state.verified = compatible;
   ui.gain.value = device.gain ?? ui.gain.value;
   ui.integration.value = device.integration_time ?? ui.integration.value;
-  ui.pwm.value = String(device.pwm_percent ?? ui.pwm.value);
   ui.autoPage.checked = Boolean(device.auto_page);
   if (Array.isArray(device.display_lines)) ui.oled.textContent = device.display_lines.join("\n");
   updateInstrumentState(device, compatible);
@@ -282,6 +336,7 @@ function handleDeviceState(device) {
     label.classList.toggle("error", !compatible);
   });
   showMessage(compatible ? "Instrumento verificado. Adquisición habilitada." : "El equipo no cumple el protocolo 2.3.0 requerido.", compatible ? "success" : "error");
+  syncPwmFromDevice(device.pwm_percent ?? state.devicePwm);
 }
 
 function updateInstrumentState(device, compatible) {
@@ -322,7 +377,7 @@ function updateReadings(frame) {
   ui.contextValues[4].textContent = "USB";
   ui.gain.value = frame.gain;
   ui.integration.value = frame.integration_time;
-  ui.pwm.value = String(frame.pwm_percent);
+  syncPwmFromDevice(frame.pwm_percent);
   if (Array.isArray(frame.display_lines)) ui.oled.textContent = frame.display_lines.join("\n");
   ui.pageLabel.textContent = `Página física: ${frame.page + 1}`;
   ui.instrumentSummary[0].textContent = ui.sampleSelect.value || "-";
@@ -581,7 +636,7 @@ function cancelPending(message) {
 
 function changeSetting(payload) {
   if (state.pending) cancelPending("Captura cancelada porque cambió la configuración del instrumento.");
-  void sendCommand(payload);
+  return sendCommand(payload);
 }
 
 function updateCaptureButtons() {
